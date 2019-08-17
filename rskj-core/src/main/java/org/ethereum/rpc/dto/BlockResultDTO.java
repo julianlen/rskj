@@ -21,6 +21,7 @@ package org.ethereum.rpc.dto;
 import co.rsk.core.BlockDifficulty;
 import co.rsk.core.Coin;
 import co.rsk.core.RskAddress;
+import co.rsk.core.SenderResolverVisitor;
 import co.rsk.crypto.Keccak256;
 import org.ethereum.core.Block;
 import org.ethereum.core.BlockHeader;
@@ -110,7 +111,7 @@ public class BlockResultDTO {
         this.hashForMergedMining = TypeConverter.toUnformattedJsonHex(hashForMergedMining);
     }
 
-    public static BlockResultDTO fromBlock(Block b, boolean fullTx, BlockStore blockStore) {
+    public static BlockResultDTO fromBlock(Block b, boolean fullTx, BlockStore blockStore, SenderResolverVisitor senderResolver) {
         if (b == null) {
             return null;
         }
@@ -124,7 +125,8 @@ public class BlockResultDTO {
         List<Transaction> blockTransactions = b.getTransactionsList();
         if (fullTx) {
             for (int i = 0; i < blockTransactions.size(); i++) {
-                transactions.add(new TransactionResultDTO(b, i, blockTransactions.get(i)));
+                Transaction tx = blockTransactions.get(i);
+                transactions.add(new TransactionResultDTO(b, i, tx, tx.accept(senderResolver)));
             }
         } else {
             for (Transaction tx : blockTransactions) {

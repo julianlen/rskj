@@ -18,6 +18,7 @@
 
 package org.ethereum.rpc.dto;
 
+import co.rsk.core.RskAddress;
 import org.ethereum.core.Block;
 import org.ethereum.core.Transaction;
 import org.ethereum.core.TransactionReceipt;
@@ -47,8 +48,7 @@ public class TransactionReceiptDTO {
     public String root;
     public String status;
 
-
-    public  TransactionReceiptDTO(Block block, TransactionInfo txInfo) {
+    public  TransactionReceiptDTO(Block block, TransactionInfo txInfo, RskAddress sender) {
 
         TransactionReceipt receipt = txInfo.getReceipt();
 
@@ -58,11 +58,11 @@ public class TransactionReceiptDTO {
 
         if (receipt.getTransaction().isContractCreation()) {
             Transaction transaction = receipt.getTransaction();
-            contractAddress = HashUtil.calcNewAddr(transaction.getSender().getBytes(), transaction.getNonce()).toJsonString();
+            contractAddress = HashUtil.calcNewAddr(sender.getBytes(), transaction.getNonce()).toJsonString();
         }
 
         cumulativeGasUsed = toQuantityJsonHex(receipt.getCumulativeGas());
-        from = receipt.getTransaction().getSender().toJsonString();
+        from = sender.toJsonString();
         gasUsed = toQuantityJsonHex(receipt.getGasUsed());
 
         logs = new LogFilterElement[receipt.getLogInfoList().size()];

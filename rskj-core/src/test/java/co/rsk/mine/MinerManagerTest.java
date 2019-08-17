@@ -21,10 +21,7 @@ package co.rsk.mine;
 import co.rsk.config.ConfigUtils;
 import co.rsk.config.MiningConfig;
 import co.rsk.config.TestSystemProperties;
-import co.rsk.core.Coin;
-import co.rsk.core.DifficultyCalculator;
-import co.rsk.core.RskImpl;
-import co.rsk.core.SnapshotManager;
+import co.rsk.core.*;
 import co.rsk.core.bc.BlockExecutor;
 import co.rsk.core.bc.MiningMainchainView;
 import co.rsk.db.RepositoryLocator;
@@ -302,7 +299,7 @@ public class MinerManagerTest {
                         blockFactory,
                         blockExecutor,
                         new MinimumGasPriceCalculator(Coin.valueOf(miningConfig.getMinGasPriceTarget())),
-                        new MinerUtils()
+                        new MinerUtils(new SenderResolverVisitor())
                 ),
                 clock,
                 blockFactory,

@@ -102,7 +102,7 @@ public class CodeReplaceTest {
         Transaction tx1 = createTx(sender, new byte[0], code, repository);
         executeTransaction(blockchain, tx1, repository, blockStore);
         // Now we can directly check the store and see the new code.
-        RskAddress createdContract = HashUtil.calcNewAddr(tx1.getSender().getBytes(), tx1.getNonce());
+        RskAddress createdContract = HashUtil.calcNewAddr(tx1.accept(new SenderResolverVisitor()).getBytes(), tx1.getNonce());
         byte[] expectedCode  = Arrays.copyOfRange(code, 12, 12+20);
         byte[] installedCode = repository.getCode(createdContract);
         // assert the contract has been created
@@ -118,7 +118,7 @@ public class CodeReplaceTest {
         byte[] code2 = assembler.assemble(asm2);
 
         // The second transaction changes the contract code
-        Transaction tx2 = createTx(sender, HashUtil.calcNewAddr(tx1.getSender().getBytes(), tx1.getNonce()).getBytes(), code2, repository);
+        Transaction tx2 = createTx(sender, HashUtil.calcNewAddr(tx1.accept(new SenderResolverVisitor()).getBytes(), tx1.getNonce()).getBytes(), code2, repository);
         TransactionExecutor executor2 = executeTransaction(blockchain, tx2, repository, blockStore);
         byte[] installedCode2 = repository.getCode(createdContract);
         // assert the contract code has been created
@@ -126,7 +126,7 @@ public class CodeReplaceTest {
         Assert.assertEquals(1, executor2.getResult().getCodeChanges().size()); // there is one code change
 
         // We could add a third tx to execute the new code
-        Transaction tx3 = createTx(sender, HashUtil.calcNewAddr(tx1.getSender().getBytes(), tx1.getNonce()).getBytes(), new byte[0], repository);
+        Transaction tx3 = createTx(sender, HashUtil.calcNewAddr(tx1.accept(new SenderResolverVisitor()).getBytes(), tx1.getNonce()).getBytes(), new byte[0], repository);
         TransactionExecutor executor3 = executeTransaction(blockchain, tx3, repository, blockStore);
         // check return code from contract call
         Assert.assertArrayEquals(Hex.decode("FF"), executor3.getResult().getHReturn());
@@ -210,7 +210,7 @@ public class CodeReplaceTest {
         Transaction tx1 = createTx(sender, new byte[0], code, repository);
         executeTransaction(blockchain, tx1, repository, blockStore);
         // Now we can directly check the store and see the new code.
-        RskAddress createdContract = HashUtil.calcNewAddr(tx1.getSender().getBytes(), tx1.getNonce());
+        RskAddress createdContract = HashUtil.calcNewAddr(tx1.accept(new SenderResolverVisitor()).getBytes(), tx1.getNonce());
         byte[] expectedCode  = Arrays.copyOfRange(code, 12, 12+20);
         byte[] installedCode = repository.getCode(createdContract);
         // assert the contract has been created
@@ -224,7 +224,7 @@ public class CodeReplaceTest {
 
         byte[] code2 = assembler.assemble(asm2);
 
-        Transaction tx2 = createTx(sender, HashUtil.calcNewAddr(tx1.getSender().getBytes(), tx1.getNonce()).getBytes(), code2, repository);
+        Transaction tx2 = createTx(sender, HashUtil.calcNewAddr(tx1.accept(new SenderResolverVisitor()).getBytes(), tx1.getNonce()).getBytes(), code2, repository);
         TransactionExecutor executor2 = executeTransaction(blockchain, tx2, repository, blockStore);
         // code remains the same
         Assert.assertArrayEquals(code2, code2);
@@ -263,19 +263,20 @@ public class CodeReplaceTest {
                                                   BlockStore blockStore) {
         Repository track = repository.startTracking();
 
+        SenderResolverVisitor senderResolver = new SenderResolverVisitor();
         BridgeSupportFactory bridgeSupportFactory = new BridgeSupportFactory(
                 new RepositoryBtcBlockStoreWithCache.Factory(config.getNetworkConstants().getBridgeConstants().getBtcParams()),
                 config.getNetworkConstants().getBridgeConstants(),
-                config.getActivationConfig());
+                config.getActivationConfig(), senderResolver);
         TransactionExecutorFactory transactionExecutorFactory = new TransactionExecutorFactory(
                 config,
                 blockStore,
                 null,
                 blockFactory,
                 new ProgramInvokeFactoryImpl(),
-                new PrecompiledContracts(config, bridgeSupportFactory));
+                new PrecompiledContracts(config, bridgeSupportFactory, senderResolver), senderResolver);
         TransactionExecutor executor = transactionExecutorFactory
-                .newInstance(tx, tx.getSender(), 0, RskAddress.nullAddress(), repository, blockchain.getBestBlock(), 0);
+                .newInstance(tx, 0, RskAddress.nullAddress(), repository, blockchain.getBestBlock(), 0);
 
         executor.init();
         executor.execute();

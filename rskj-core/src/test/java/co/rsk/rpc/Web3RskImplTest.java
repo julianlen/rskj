@@ -19,10 +19,7 @@
 package co.rsk.rpc;
 
 import co.rsk.config.TestSystemProperties;
-import co.rsk.core.NetworkStateExporter;
-import co.rsk.core.Rsk;
-import co.rsk.core.Wallet;
-import co.rsk.core.WalletFactory;
+import co.rsk.core.*;
 import co.rsk.core.bc.MiningMainchainView;
 import co.rsk.crypto.Keccak256;
 import co.rsk.peg.BridgeSupportFactory;
@@ -84,9 +81,9 @@ public class Web3RskImplTest {
                 null, new ExecutionBlockRetriever(mainchainView, blockchain, null, null),
                 null, new EthModuleSolidityDisabled(), new EthModuleWalletEnabled(wallet), null,
                 new BridgeSupportFactory(
-                        null, config.getNetworkConstants().getBridgeConstants(), config.getActivationConfig())
+                        null, config.getNetworkConstants().getBridgeConstants(), config.getActivationConfig(), new SenderResolverVisitor())
         );
-        TxPoolModule tpm = new TxPoolModuleImpl(Web3Mocks.getMockTransactionPool());
+        TxPoolModule tpm = new TxPoolModuleImpl(Web3Mocks.getMockTransactionPool(), new SenderResolverVisitor());
         DebugModule dm = new DebugModuleImpl(null, null, Web3Mocks.getMockMessageHandler(), null);
         Web3RskImpl web3 = new Web3RskImpl(
                 rsk,
@@ -112,7 +109,7 @@ public class Web3RskImplTest {
                 null,
                 null,
                 null,
-                null
+                null, new SenderResolverVisitor()
         );
         web3.ext_dumpState();
     }

@@ -20,6 +20,7 @@ package org.ethereum.rpc;
 
 import co.rsk.config.RskSystemProperties;
 import co.rsk.core.RskAddress;
+import co.rsk.core.SenderResolverVisitor;
 import co.rsk.core.bc.AccountInformationProvider;
 import co.rsk.core.bc.BlockResult;
 import co.rsk.crypto.Keccak256;
@@ -74,6 +75,7 @@ import static org.ethereum.rpc.TypeConverter.*;
 
 public class Web3Impl implements Web3 {
     private static final Logger logger = LoggerFactory.getLogger("web3");
+    private final SenderResolverVisitor senderResolver;
 
     public Ethereum eth;
 
@@ -132,7 +134,8 @@ public class Web3Impl implements Web3 {
             HashRateCalculator hashRateCalculator,
             ConfigCapabilities configCapabilities,
             BuildInfo buildInfo,
-            BlocksBloomStore blocksBloomStore) {
+            BlocksBloomStore blocksBloomStore,
+            SenderResolverVisitor senderResolver) {
         this.eth = eth;
         this.blockchain = blockchain;
         this.blockStore = blockStore;
@@ -160,6 +163,7 @@ public class Web3Impl implements Web3 {
         initialBlockNumber = this.blockchain.getBestBlock().getNumber();
 
         personalModule.init();
+        this.senderResolver = senderResolver;
     }
 
     @Override
@@ -546,7 +550,7 @@ public class Web3Impl implements Web3 {
     }
 
     public BlockResultDTO getBlockResult(Block b, boolean fullTx) {
-        return BlockResultDTO.fromBlock(b, fullTx, this.blockStore);
+        return BlockResultDTO.fromBlock(b, fullTx, this.blockStore, senderResolver);
     }
 
     public BlockInformationResult[] eth_getBlocksByNumber(String number) {
@@ -611,7 +615,7 @@ public class Web3Impl implements Web3 {
 
                 for (Transaction tx : txs) {
                     if (tx.getHash().equals(txHash)) {
-                        return s = new TransactionResultDTO(null, null, tx);
+                        return s = new TransactionResultDTO(null, null, tx, tx.accept(senderResolver));
                     }
                 }
             } else {
@@ -628,7 +632,7 @@ public class Web3Impl implements Web3 {
                 return null;
             }
 
-            return s = new TransactionResultDTO(block, txInfo.getIndex(), txInfo.getReceipt().getTransaction());
+            return s = new TransactionResultDTO(block, txInfo.getIndex(), txInfo.getReceipt().getTransaction(), txInfo.getReceipt().getTransaction().accept(senderResolver));
         } finally {
             logger.debug("eth_getTransactionByHash({}): {}", transactionHash, s);
         }
@@ -652,7 +656,7 @@ public class Web3Impl implements Web3 {
 
             Transaction tx = b.getTransactionsList().get(idx);
 
-            return s = new TransactionResultDTO(b, idx, tx);
+            return s = new TransactionResultDTO(b, idx, tx, tx.accept(senderResolver));
         } finally {
             if (logger.isDebugEnabled()) {
                 logger.debug("eth_getTransactionByBlockHashAndIndex({}, {}): {}", blockHash, index, s);
@@ -679,7 +683,7 @@ public class Web3Impl implements Web3 {
 
             Transaction tx = txs.get(idx);
 
-            return s = new TransactionResultDTO(b, idx, tx);
+            return s = new TransactionResultDTO(b, idx, tx, tx.accept(senderResolver));
         } finally {
             if (logger.isDebugEnabled()) {
                 logger.debug("eth_getTransactionByBlockNumberAndIndex({}, {}): {}", bnOrId, index, s);
@@ -703,7 +707,7 @@ public class Web3Impl implements Web3 {
         Transaction tx = block.getTransactionsList().get(txInfo.getIndex());
         txInfo.setTransaction(tx);
 
-        return new TransactionReceiptDTO(block, txInfo);
+        return new TransactionReceiptDTO(block, txInfo, tx.accept(senderResolver));
     }
 
     @Override

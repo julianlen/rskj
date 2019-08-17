@@ -24,6 +24,7 @@ import co.rsk.config.MiningConfig;
 import co.rsk.config.TestSystemProperties;
 import co.rsk.core.Coin;
 import co.rsk.core.DifficultyCalculator;
+import co.rsk.core.SenderResolverVisitor;
 import co.rsk.core.SnapshotManager;
 import co.rsk.core.bc.BlockChainStatus;
 import co.rsk.core.bc.MiningMainchainView;
@@ -169,7 +170,7 @@ public class Web3ImplSnapshotTest {
                                                 )
         );
         PersonalModule pm = new PersonalModuleWalletDisabled();
-        TxPoolModule tpm = new TxPoolModuleImpl(Web3Mocks.getMockTransactionPool());
+        TxPoolModule tpm = new TxPoolModuleImpl(Web3Mocks.getMockTransactionPool(), new SenderResolverVisitor());
         DebugModule dm = new DebugModuleImpl(null, null, Web3Mocks.getMockMessageHandler(), null);
 
         ethereum.blockchain = blockchain;
@@ -197,7 +198,7 @@ public class Web3ImplSnapshotTest {
                 null,
                 null,
                 null,
-                null
+                null, new SenderResolverVisitor()
         );
     }
 
@@ -230,7 +231,7 @@ public class Web3ImplSnapshotTest {
                         blockFactory,
                         factory.getBlockExecutor(),
                         new MinimumGasPriceCalculator(Coin.valueOf(miningConfig.getMinGasPriceTarget())),
-                        new MinerUtils()
+                        new MinerUtils(new SenderResolverVisitor())
                 ),
                 clock,
                 blockFactory,

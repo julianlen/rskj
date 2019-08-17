@@ -20,6 +20,7 @@ package co.rsk.rpc;
 
 import co.rsk.config.RskSystemProperties;
 import co.rsk.core.NetworkStateExporter;
+import co.rsk.core.SenderResolverVisitor;
 import co.rsk.db.RepositoryLocator;
 import co.rsk.logfilter.BlocksBloomStore;
 import co.rsk.metrics.HashRateCalculator;
@@ -41,10 +42,8 @@ import org.ethereum.facade.Ethereum;
 import org.ethereum.net.client.ConfigCapabilities;
 import org.ethereum.net.server.ChannelManager;
 import org.ethereum.net.server.PeerServer;
-import org.ethereum.rpc.Web3Impl;
 import org.ethereum.util.BuildInfo;
 import org.junit.Test;
-import org.mockito.MockSettings;
 
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.*;
@@ -80,7 +79,7 @@ public class Web3EthModuleTest {
                 mock(HashRateCalculator.class),
                 mock(ConfigCapabilities.class),
                 mock(BuildInfo.class),
-                mock(BlocksBloomStore.class)
+                mock(BlocksBloomStore.class), new SenderResolverVisitor()
         );
 
         assertThat(web3.eth_chainId(), is("0x21"));
