@@ -50,6 +50,7 @@ import org.bouncycastle.util.encoders.Hex;
 import org.ethereum.config.SystemProperties;
 import org.ethereum.core.*;
 import org.ethereum.crypto.ECKey;
+import org.ethereum.crypto.HashUtil;
 import org.ethereum.crypto.Keccak256Helper;
 import org.ethereum.datasource.HashMapDB;
 import org.ethereum.db.BlockStore;
@@ -870,7 +871,7 @@ public class Web3ImplTest {
         Web3Impl web3 = createWeb3Mocked(world);
 
         Web3.CallArguments argsForCall = new Web3.CallArguments();
-        argsForCall.to = TypeConverter.toJsonHex(tx.getContractAddress().getBytes());
+        argsForCall.to = TypeConverter.toJsonHex(HashUtil.calcNewAddr(tx.getSender().getBytes(), tx.getNonce()).getBytes());
         argsForCall.data = TypeConverter.toJsonHex(greeter.functions.get("greet").encodeSignature());
 
         String result = web3.eth_call(argsForCall, "latest");
@@ -917,7 +918,7 @@ public class Web3ImplTest {
 
         Web3.CallArguments argsForCall = new Web3.CallArguments();
         argsForCall.from = TypeConverter.toJsonHex(acc1.getAddress().getBytes());
-        argsForCall.to = TypeConverter.toJsonHex(tx.getContractAddress().getBytes());
+        argsForCall.to = TypeConverter.toJsonHex(HashUtil.calcNewAddr(tx.getSender().getBytes(), tx.getNonce()).getBytes());
         argsForCall.data = "0xead710c40000000000000000000000000000000000000000000000000000000064617665";
 
         String result = web3.eth_call(argsForCall, "latest");
