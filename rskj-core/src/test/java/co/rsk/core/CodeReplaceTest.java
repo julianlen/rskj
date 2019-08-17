@@ -275,7 +275,7 @@ public class CodeReplaceTest {
                 new ProgramInvokeFactoryImpl(),
                 new PrecompiledContracts(config, bridgeSupportFactory));
         TransactionExecutor executor = transactionExecutorFactory
-                .newInstance(tx, 0, RskAddress.nullAddress(), repository, blockchain.getBestBlock(), 0);
+                .newInstance(tx, tx.getSender(), 0, RskAddress.nullAddress(), repository, blockchain.getBestBlock(), 0);
 
         executor.init();
         executor.execute();
