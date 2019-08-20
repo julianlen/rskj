@@ -229,10 +229,18 @@ public class RskContext implements NodeBootstrapper {
     @Override
     public NodeRunner getNodeRunner() {
         if (nodeRunner == null) {
-            nodeRunner = buildNodeRunner();
+            if (!rskSystemProperties.isLightSyncModeEnabled()){
+                nodeRunner = buildFullNodeRunner();
+            } else {
+                nodeRunner = buildLightNodeRunner();
+            }
         }
 
         return nodeRunner;
+    }
+
+    private NodeRunner buildLightNodeRunner() {
+
     }
 
     public Blockchain getBlockchain() {
@@ -675,7 +683,7 @@ public class RskContext implements NodeBootstrapper {
         return blocksBloomStore;
     }
 
-    protected NodeRunner buildNodeRunner() {
+    protected NodeRunner buildFullNodeRunner() {
         return new FullNodeRunner(
                 getRsk(),
                 getUdpServer(),
@@ -1477,9 +1485,5 @@ public class RskContext implements NodeBootstrapper {
         KeyValueDataSource ds = new LevelDbDataSource(name, databaseDir);
         ds.init();
         return ds;
-    }
-
-    public String getSyncMode() {
-        return rskSystemProperties.getSyncMode();
     }
 }

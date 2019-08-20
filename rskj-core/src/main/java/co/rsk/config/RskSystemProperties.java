@@ -322,4 +322,6 @@ public class RskSystemProperties extends SystemProperties {
     }
 
     public String getSyncMode() {return configFromFiles.getString("sync.mode"); }
+
+    public boolean isLightSyncModeEnabled() {return getSyncMode().equals("light"); }
 }
