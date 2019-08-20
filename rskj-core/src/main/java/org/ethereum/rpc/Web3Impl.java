@@ -21,7 +21,7 @@ package org.ethereum.rpc;
 import co.rsk.config.RskSystemProperties;
 import co.rsk.core.RskAddress;
 import co.rsk.core.bc.AccountInformationProvider;
-import co.rsk.core.bc.BlockResult;
+import co.rsk.core.bc.BlockHashesHelper;
 import co.rsk.crypto.Keccak256;
 import co.rsk.db.RepositoryLocator;
 import co.rsk.logfilter.BlocksBloomStore;
@@ -39,6 +39,7 @@ import co.rsk.rpc.modules.txpool.TxPoolModule;
 import co.rsk.scoring.InvalidInetAddressException;
 import co.rsk.scoring.PeerScoringInformation;
 import co.rsk.scoring.PeerScoringManager;
+import co.rsk.trie.Trie;
 import org.bouncycastle.util.encoders.Hex;
 import org.ethereum.config.blockchain.upgrades.ConsensusRule;
 import org.ethereum.core.*;
@@ -60,6 +61,7 @@ import org.ethereum.rpc.dto.TransactionResultDTO;
 import org.ethereum.rpc.exception.JsonRpcInvalidParamException;
 import org.ethereum.rpc.exception.JsonRpcUnimplementedMethodException;
 import org.ethereum.util.BuildInfo;
+import org.ethereum.util.RLP;
 import org.ethereum.vm.DataWord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -571,14 +573,42 @@ public class Web3Impl implements Web3 {
 
     @Override
     public BlockResultDTO eth_getBlockByHash(String blockHash, Boolean fullTransactionObjects) throws Exception {
-        BlockResult s = null;
+        BlockResultDTO s = null;
         try {
             Block b = getBlockByJSonHash(blockHash);
 
-            return getBlockResult(b, fullTransactionObjects);
+            return s = (b == null ? null : getBlockResult(b, fullTransactionObjects));
         } finally {
             if (logger.isDebugEnabled()) {
                 logger.debug("eth_getBlockByHash({}, {}): {}", blockHash, fullTransactionObjects, s);
+            }
+        }
+    }
+
+    @Override
+    public String eth_getRawBlockHeaderByHash(String blockHash) throws Exception {
+        String s = null;
+        try {
+            Block b = getBlockByJSonHash(blockHash);
+
+            return s = (b == null ? null : b.getEncodedForBlockHashJsonString());
+        } finally {
+            if (logger.isDebugEnabled()) {
+                logger.debug("eth_getRawBlockHeaderByHash({}): {}", blockHash, s);
+            }
+        }
+    }
+
+    @Override
+    public String eth_getRawBlockHeaderByNumber(String bnOrId) throws Exception {
+        String s = null;
+        try {
+            Block b = getByJsonBlockId(bnOrId);
+
+            return s = (b == null ? null : b.getEncodedForBlockHashJsonString());
+        } finally {
+            if (logger.isDebugEnabled()) {
+                logger.debug("eth_getRawBlockHeaderByNumber({}): {}", bnOrId, s);
             }
         }
     }
@@ -704,6 +734,73 @@ public class Web3Impl implements Web3 {
         txInfo.setTransaction(tx);
 
         return new TransactionReceiptDTO(block, txInfo);
+    }
+
+    @Override
+    public String eth_getRawTransactionReceiptByHash(String transactionHash) throws Exception {
+        String s = null;
+        try {
+            byte[] hash = stringHexToByteArray(transactionHash);
+            TransactionInfo txInfo = receiptStore.getInMainChain(hash, blockStore);
+
+            if (txInfo == null) {
+                logger.trace("No transaction info for {}", transactionHash);
+                return null;
+            }
+            return TypeConverter.toUnformattedJsonHex(txInfo.getReceipt().getEncoded());
+        } finally {
+            if (logger.isDebugEnabled()) {
+                logger.debug("eth_getRawTransactionReceiptByHash({}): {}", transactionHash, s);
+            }
+        }
+    }
+
+    @Override
+    public String[] eth_getTransactionReceiptNodesByHash(String blockHash, String transactionHash) throws Exception {
+        String[] encodedNodes = null;
+
+        try {
+            Keccak256 txHash = new Keccak256(stringHexToByteArray(transactionHash));
+            byte[] bhash = stringHexToByteArray(blockHash);
+            Block block = this.blockchain.getBlockByHash(bhash);
+            List<Transaction> transactions = block.getTransactionsList();
+            List<TransactionReceipt> receipts = new ArrayList<>();
+
+            int ntxs = transactions.size();
+            int ntx = -1;
+
+            for (int k = 0; k < ntxs; k++) {
+                Transaction transaction = transactions.get(k);
+                Keccak256 txh = transaction.getHash();
+
+                TransactionInfo txinfo = this.receiptStore.get(txh.getBytes(), bhash, this.blockStore);
+                receipts.add(txinfo.getReceipt());
+
+                if (txh.equals(txHash)) {
+                    ntx = k;
+                }
+            }
+
+            if (ntx == -1) {
+                return null;
+            }
+
+            Trie trie = BlockHashesHelper.calculateReceiptsTrieRootFor(receipts);
+
+            List<Trie> nodes = trie.getNodes(RLP.encodeInt(ntx));
+
+            encodedNodes = new String[nodes.size()];
+
+            for (int k = 0; k < encodedNodes.length; k++) {
+                encodedNodes[k] = TypeConverter.toUnformattedJsonHex(nodes.get(k).toMessage());
+            }
+
+            return encodedNodes;
+        } finally {
+            if (logger.isDebugEnabled()) {
+                logger.debug("eth_getTransactionReceiptNodesByHash({}): {}", blockHash, Arrays.toString(encodedNodes));
+            }
+        }
     }
 
     @Override
