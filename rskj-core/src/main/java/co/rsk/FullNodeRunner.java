@@ -39,27 +39,17 @@ import org.slf4j.LoggerFactory;
 
 import java.util.stream.Collectors;
 
-public class FullNodeRunner implements NodeRunner {
+public class FullNodeRunner extends GenericNodeRunner {
     private static Logger logger = LoggerFactory.getLogger("fullnoderunner");
 
-    private final Rsk rsk;
-    private final UDPServer udpServer;
     private final MinerServer minerServer;
     private final MinerClient minerClient;
-    private final RskSystemProperties rskSystemProperties;
-    private final Web3HttpServer web3HttpServer;
-    private final Web3WebSocketServer web3WebSocketServer;
     private final Blockchain blockchain;
-    private final ChannelManager channelManager;
-    private final SyncPool syncPool;
-    private final MessageHandler messageHandler;
 
-    private final Web3 web3Service;
     private final TransactionPool transactionPool;
-    private final PeerServer peerServer;
-    private final SyncPool.PeerClientFactory peerClientFactory;
+
     private final TransactionGateway transactionGateway;
-    private final BuildInfo buildInfo;
+
 
     public FullNodeRunner(
             Rsk rsk,
@@ -79,23 +69,14 @@ public class FullNodeRunner implements NodeRunner {
             SyncPool.PeerClientFactory peerClientFactory,
             TransactionGateway transactionGateway,
             BuildInfo buildInfo) {
-        this.rsk = rsk;
-        this.udpServer = udpServer;
+        super(rsk, udpServer, rskSystemProperties, web3Service, web3HttpServer,
+                web3WebSocketServer, channelManager, syncPool, messageHandler,
+                peerServer, peerClientFactory, buildInfo);
         this.minerServer = minerServer;
         this.minerClient = minerClient;
-        this.rskSystemProperties = rskSystemProperties;
-        this.web3HttpServer = web3HttpServer;
-        this.web3Service = web3Service;
-        this.web3WebSocketServer = web3WebSocketServer;
         this.blockchain = blockchain;
-        this.channelManager = channelManager;
-        this.syncPool = syncPool;
-        this.messageHandler = messageHandler;
         this.transactionPool = transactionPool;
-        this.peerServer = peerServer;
-        this.peerClientFactory = peerClientFactory;
         this.transactionGateway = transactionGateway;
-        this.buildInfo = buildInfo;
     }
 
     @Override

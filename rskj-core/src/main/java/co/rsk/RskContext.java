@@ -229,7 +229,7 @@ public class RskContext implements NodeBootstrapper {
     @Override
     public NodeRunner getNodeRunner() {
         if (nodeRunner == null) {
-            if (!rskSystemProperties.isLightSyncModeEnabled()){
+            if (!getRskSystemProperties().isLightSyncModeEnabled()){
                 nodeRunner = buildFullNodeRunner();
             } else {
                 nodeRunner = buildLightNodeRunner();
@@ -237,10 +237,6 @@ public class RskContext implements NodeBootstrapper {
         }
 
         return nodeRunner;
-    }
-
-    private NodeRunner buildLightNodeRunner() {
-
     }
 
     public Blockchain getBlockchain() {
@@ -701,6 +697,23 @@ public class RskContext implements NodeBootstrapper {
                 getPeerServer(),
                 getPeerClientFactory(),
                 getTransactionGateway(),
+                getBuildInfo()
+        );
+    }
+
+    private NodeRunner buildLightNodeRunner() {
+        return new LightNodeRunner(
+                getRsk(),
+                getUdpServer(),
+                getRskSystemProperties(),
+                getWeb3(),
+                getWeb3HttpServer(),
+                getWeb3WebSocketServer(),
+                getChannelManager(),
+                getSyncPool(),
+                getNodeMessageHandler(),
+                getPeerServer(),
+                getPeerClientFactory(),
                 getBuildInfo()
         );
     }
