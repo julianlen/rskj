@@ -320,4 +320,6 @@ public class RskSystemProperties extends SystemProperties {
     public long getVmExecutionStackSize() {
         return configFromFiles.getBytes("vm.executionStackSize");
     }
+
+    public String getSyncMode() {return configFromFiles.getString("sync.mode"); }
 }

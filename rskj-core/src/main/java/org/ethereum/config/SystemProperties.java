@@ -83,6 +83,8 @@ public abstract class SystemProperties {
     public static final String PROPERTY_PUBLIC_IP = "public.ip";
     public static final String PROPERTY_BIND_ADDRESS = "bind_address";
 
+    public static final String PROPERTY_SYNC_MODE = "sync.mode";
+
     /* Testing */
     private static final Boolean DEFAULT_VMTEST_LOAD_LOCAL = false;
     private static final String DEFAULT_BLOCKS_LOADER = "";

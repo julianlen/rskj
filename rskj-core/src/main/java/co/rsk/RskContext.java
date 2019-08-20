@@ -1478,4 +1478,8 @@ public class RskContext implements NodeBootstrapper {
         ds.init();
         return ds;
     }
+
+    public String getSyncMode() {
+        return rskSystemProperties.getSyncMode();
+    }
 }
