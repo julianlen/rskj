@@ -11,6 +11,8 @@ import org.ethereum.net.server.PeerServer;
 import org.ethereum.rpc.Web3;
 import org.ethereum.sync.SyncPool;
 import org.ethereum.util.BuildInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class GenericNodeRunner implements NodeRunner{
 
@@ -26,6 +28,7 @@ public abstract class GenericNodeRunner implements NodeRunner{
     protected final PeerServer peerServer;
     protected final SyncPool.PeerClientFactory peerClientFactory;
     protected final BuildInfo buildInfo;
+    protected final Logger logger;
 
 
     public GenericNodeRunner(Rsk rsk, UDPServer udpServer,
@@ -38,7 +41,8 @@ public abstract class GenericNodeRunner implements NodeRunner{
                              MessageHandler messageHandler,
                              PeerServer peerServer,
                              SyncPool.PeerClientFactory peerClientFactory,
-                             BuildInfo buildInfo
+                             BuildInfo buildInfo,
+                             String nodeName
                              ){
         this.rsk = rsk;
         this.udpServer = udpServer;
@@ -52,6 +56,30 @@ public abstract class GenericNodeRunner implements NodeRunner{
         this.peerServer = peerServer;
         this.peerClientFactory = peerClientFactory;
         this.buildInfo = buildInfo;
+        this.logger = LoggerFactory.getLogger(nodeName);
+    }
+
+    protected void startWeb3(RskSystemProperties rskSystemProperties) throws InterruptedException {
+        boolean rpcHttpEnabled = rskSystemProperties.isRpcHttpEnabled();
+        boolean rpcWebSocketEnabled = rskSystemProperties.isRpcWebSocketEnabled();
+
+        if (rpcHttpEnabled || rpcWebSocketEnabled) {
+            web3Service.start();
+        }
+
+        if (rpcHttpEnabled) {
+            logger.info("RPC HTTP enabled");
+            web3HttpServer.start();
+        } else {
+            logger.info("RPC HTTP disabled");
+        }
+
+        if (rpcWebSocketEnabled) {
+            logger.info("RPC WebSocket enabled");
+            web3WebSocketServer.start();
+        } else {
+            logger.info("RPC WebSocket disabled");
+        }
     }
 
 }

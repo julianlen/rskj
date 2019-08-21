@@ -40,7 +40,6 @@ import org.slf4j.LoggerFactory;
 import java.util.stream.Collectors;
 
 public class FullNodeRunner extends GenericNodeRunner {
-    private static Logger logger = LoggerFactory.getLogger("fullnoderunner");
 
     private final MinerServer minerServer;
     private final MinerClient minerClient;
@@ -71,7 +70,7 @@ public class FullNodeRunner extends GenericNodeRunner {
             BuildInfo buildInfo) {
         super(rsk, udpServer, rskSystemProperties, web3Service, web3HttpServer,
                 web3WebSocketServer, channelManager, syncPool, messageHandler,
-                peerServer, peerClientFactory, buildInfo);
+                peerServer, peerClientFactory, buildInfo, "fullnoderunner");
         this.minerServer = minerServer;
         this.minerClient = minerClient;
         this.blockchain = blockchain;
@@ -131,29 +130,6 @@ public class FullNodeRunner extends GenericNodeRunner {
         }
 
         logger.info("done");
-    }
-
-    private void startWeb3(RskSystemProperties rskSystemProperties) throws InterruptedException {
-        boolean rpcHttpEnabled = rskSystemProperties.isRpcHttpEnabled();
-        boolean rpcWebSocketEnabled = rskSystemProperties.isRpcWebSocketEnabled();
-
-        if (rpcHttpEnabled || rpcWebSocketEnabled) {
-            web3Service.start();
-        }
-
-        if (rpcHttpEnabled) {
-            logger.info("RPC HTTP enabled");
-            web3HttpServer.start();
-        } else {
-            logger.info("RPC HTTP disabled");
-        }
-
-        if (rpcWebSocketEnabled) {
-            logger.info("RPC WebSocket enabled");
-            web3WebSocketServer.start();
-        } else {
-            logger.info("RPC WebSocket disabled");
-        }
     }
 
     private void waitRskSyncDone() throws InterruptedException {
